@@ -295,6 +295,7 @@ public:
         delete pFile;
     }
 
+    std::vector<BlobEntry> blobs;
 private:
     // -------------------------------------------------------------------
     void OnDestruct(const std::string &filename, BlobIOStream *child) {
@@ -307,11 +308,10 @@ private:
 private:
     std::string baseName;
     std::set<std::string> created;
-    std::vector<BlobEntry> blobs;
 };
 
 // --------------------------------------------------------------------------------------------
-BlobIOStream::~BlobIOStream() {
+inline BlobIOStream::~BlobIOStream() {
     if (nullptr != creator) {
         creator->OnDestruct(file, this);
     }
