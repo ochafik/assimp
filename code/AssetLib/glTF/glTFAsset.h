@@ -129,7 +129,7 @@ using glTFCommon::vec3;
 using glTFCommon::vec4;
 
 //! Magic number for GLB files
-#define AI_GLB_MAGIC_NUMBER "glTF"
+#define AI_GLB_MAGIC_NUMBER "glTF\x01\0\0\0"
 
 // clang-format off
 #ifdef ASSIMP_API
