@@ -110,6 +110,8 @@ glTF2Exporter::glTF2Exporter(const char *filename, IOSystem *pIOSystem, const ai
     ExportMeshes();
     MergeMeshes();
 
+    ExportLights();
+
     ExportScene();
 
     ExportAnimations();
@@ -801,6 +803,58 @@ bool glTF2Exporter::GetMatIOR(const aiMaterial &mat, glTF2::MaterialIOR &ior) {
 
 bool glTF2Exporter::GetMatEmissiveStrength(const aiMaterial &mat, glTF2::MaterialEmissiveStrength &emissiveStrength) {
     return mat.Get(AI_MATKEY_EMISSIVE_INTENSITY, emissiveStrength.emissiveStrength) == aiReturn_SUCCESS;
+}
+
+template<typename T>
+aiQuaterniont<T> calculateQuaternionFromDirection(T dx, T dy, T dz) {
+    // The default forward direction in glTF is Z+
+    // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
+    const aiVector3t<T> forward(0, 0, 1);
+    aiVector3t<T> direction(dx, dy, dz);
+    direction.Normalize();
+
+    auto rotationAxis = (forward ^ direction).Normalize();
+    T angle = std::acos(forward * direction);
+    return aiQuaterniont<T>(rotationAxis, angle);
+}
+
+void glTF2Exporter::ExportLights() {
+    for (unsigned int i = 0; i < mScene->mNumLights; ++i) {
+        aiLight *light = mScene->mLights[i];
+        if (light == nullptr) {
+            continue;
+        }
+        if (light->mType != aiLightSourceType::aiLightSource_DIRECTIONAL) {
+            continue;
+        }
+
+        auto lightId = mAsset->FindUniqueID(
+            light->mName.length > 0 ? light->mName.C_Str() : "light",
+            "id");
+        Ref<Light> l = mAsset->lights.Create(lightId);
+        l->name = lightId;
+        l->type = glTF2::Light::Directional;
+        l->color[0] = light->mColorDiffuse.r;
+        l->color[1] = light->mColorDiffuse.g;
+        l->color[2] = light->mColorDiffuse.b;
+        l->intensity = 1;
+
+        auto lightNodeId = mAsset->FindUniqueID(lightId, "node");
+        Ref<Node> lightNode = mAsset->nodes.Create(lightNodeId);
+        lightNode->light = l;
+        auto rotationQuat = calculateQuaternionFromDirection(
+            light->mDirection.x,
+            light->mDirection.y,
+            light->mDirection.z
+        );
+        lightNode->rotation.value[0] = rotationQuat.x;
+        lightNode->rotation.value[1] = rotationQuat.y;
+        lightNode->rotation.value[2] = rotationQuat.z;
+        lightNode->rotation.value[3] = rotationQuat.w;
+        lightNode->rotation.isPresent = true;
+        mAsset->nodes.Get(unsigned(0))->children.push_back(lightNode);
+    }
+    mAsset->extensionsUsed.KHR_lights_punctual = true;
 }
 
 void glTF2Exporter::ExportMaterials() {

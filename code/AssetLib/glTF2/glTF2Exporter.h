@@ -128,6 +128,7 @@ protected:
     bool GetMatEmissiveStrength(const aiMaterial &mat, glTF2::MaterialEmissiveStrength &emissiveStrength);
     void ExportMetadata();
     void ExportMaterials();
+    void ExportLights();
     void ExportMeshes();
     void MergeMeshes();
     unsigned int ExportNodeHierarchy(const aiNode *n);
