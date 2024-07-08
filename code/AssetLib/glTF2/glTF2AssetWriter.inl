@@ -254,6 +254,7 @@ namespace glTF2 {
             color.PushBack(l.color[2], w.mAl);
             obj.AddMember("color", color, w.mAl);
             obj.AddMember("type", "directional", w.mAl);
+            obj.AddMember("intensity", l.intensity, w.mAl);
         }
     }
 

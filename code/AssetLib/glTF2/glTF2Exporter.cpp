@@ -837,7 +837,7 @@ void glTF2Exporter::ExportLights() {
         l->color[0] = light->mColorDiffuse.r;
         l->color[1] = light->mColorDiffuse.g;
         l->color[2] = light->mColorDiffuse.b;
-        l->intensity = 1;
+        l->intensity = light->mDirection.Length();
 
         auto lightNodeId = mAsset->FindUniqueID(lightId, "node");
         Ref<Node> lightNode = mAsset->nodes.Create(lightNodeId);
