@@ -116,7 +116,7 @@ bool glTF2Importer::CanRead(const std::string &filename, IOSystem *pIOHandler, b
             filename,
             CheckMagicToken(
                 pIOHandler, filename, AI_GLB_MAGIC_NUMBER, 1, 0,
-                static_cast<unsigned int>(strlen(AI_GLB_MAGIC_NUMBER))));
+                static_cast<unsigned int>(sizeof(AI_GLB_MAGIC_NUMBER)-1)));
     }
 
     return false;
@@ -1686,7 +1686,7 @@ void glTF2Importer::InternReadFile(const std::string &pFile, aiScene *pScene, IO
     asset.Load(pFile,
                CheckMagicToken(
                    pIOHandler, pFile, AI_GLB_MAGIC_NUMBER, 1, 0,
-                   static_cast<unsigned int>(strlen(AI_GLB_MAGIC_NUMBER))));
+                   static_cast<unsigned int>(sizeof(AI_GLB_MAGIC_NUMBER)-1)));
     if (asset.scene) {
         pScene->mName = asset.scene->name;
     }

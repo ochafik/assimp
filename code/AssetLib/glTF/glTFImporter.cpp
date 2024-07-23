@@ -92,7 +92,7 @@ bool glTFImporter::CanRead(const std::string &pFile, IOSystem *pIOHandler, bool 
         asset.Load(pFile,
                    CheckMagicToken(
                        pIOHandler, pFile, AI_GLB_MAGIC_NUMBER, 1, 0,
-                       static_cast<unsigned int>(strlen(AI_GLB_MAGIC_NUMBER))));
+                       static_cast<unsigned int>(sizeof(AI_GLB_MAGIC_NUMBER) - 1)));
         return asset.asset;
     } catch (...) {
         return false;
@@ -699,7 +699,7 @@ void glTFImporter::InternReadFile(const std::string &pFile, aiScene *pScene, IOS
     asset.Load(pFile,
                CheckMagicToken(
                    pIOHandler, pFile, AI_GLB_MAGIC_NUMBER, 1, 0,
-                   static_cast<unsigned int>(strlen(AI_GLB_MAGIC_NUMBER))));
+                   static_cast<unsigned int>(sizeof(AI_GLB_MAGIC_NUMBER)-1)));
 
     //
     // Copy the data out
