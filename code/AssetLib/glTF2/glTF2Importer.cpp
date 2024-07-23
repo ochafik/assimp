@@ -924,69 +924,6 @@ void glTF2Importer::ImportCameras(glTF2::Asset &r) {
     }
 }
 
-void glTF2Importer::ImportLights(glTF2::Asset &r) {
-    if (!r.lights.Size()) {
-        return;
-    }
-
-    const unsigned int numLights = r.lights.Size();
-    ASSIMP_LOG_DEBUG("Importing ", numLights, " lights");
-    mScene->mNumLights = numLights;
-    mScene->mLights = new aiLight *[numLights];
-    std::fill(mScene->mLights, mScene->mLights + numLights, nullptr);
-
-    for (size_t i = 0; i < numLights; ++i) {
-        Light &light = r.lights[i];
-
-        aiLight *ail = mScene->mLights[i] = new aiLight();
-
-        switch (light.type) {
-        case Light::Directional:
-            ail->mType = aiLightSource_DIRECTIONAL;
-            break;
-        case Light::Point:
-            ail->mType = aiLightSource_POINT;
-            break;
-        case Light::Spot:
-            ail->mType = aiLightSource_SPOT;
-            break;
-        }
-
-        if (ail->mType != aiLightSource_POINT) {
-            ail->mDirection = aiVector3D(0.0f, 0.0f, -1.0f);
-            ail->mUp = aiVector3D(0.0f, 1.0f, 0.0f);
-        }
-
-        vec3 colorWithIntensity = { light.color[0] * light.intensity, light.color[1] * light.intensity, light.color[2] * light.intensity };
-        CopyValue(colorWithIntensity, ail->mColorAmbient);
-        CopyValue(colorWithIntensity, ail->mColorDiffuse);
-        CopyValue(colorWithIntensity, ail->mColorSpecular);
-
-        if (ail->mType == aiLightSource_DIRECTIONAL) {
-            ail->mAttenuationConstant = 1.0;
-            ail->mAttenuationLinear = 0.0;
-            ail->mAttenuationQuadratic = 0.0;
-        } else {
-            // in PBR attenuation is calculated using inverse square law which can be expressed
-            // using assimps equation: 1/(att0 + att1 * d + att2 * d*d) with the following parameters
-            // this is correct equation for the case when range (see
-            // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual)
-            // is not present. When range is not present it is assumed that it is infinite and so numerator is 1.
-            // When range is present then numerator might be any value in range [0,1] and then assimps equation
-            // will not suffice. In this case range is added into metadata in ImportNode function
-            // and its up to implementation to read it when it wants to
-            ail->mAttenuationConstant = 0.0;
-            ail->mAttenuationLinear = 0.0;
-            ail->mAttenuationQuadratic = 1.0;
-        }
-
-        if (ail->mType == aiLightSource_SPOT) {
-            ail->mAngleInnerCone = light.innerConeAngle;
-            ail->mAngleOuterCone = light.outerConeAngle;
-        }
-    }
-}
-
 static void GetNodeTransform(aiMatrix4x4 &matrix, const glTF2::Node &node) {
     if (node.matrix.isPresent) {
         CopyValue(node.matrix.value, matrix);
@@ -1014,6 +951,100 @@ static void GetNodeTransform(aiMatrix4x4 &matrix, const glTF2::Node &node) {
         aiMatrix4x4::Scaling(scal, s);
         matrix = matrix * s;
     }
+}
+
+static std::string GetNodeName(const Node &node) {
+    return node.name.empty() ? node.id : node.name;
+}
+
+void glTF2Importer::ImportLights(glTF2::Asset &r) {
+    if (!r.lights.Size()) {
+        return;
+    }
+
+    std::vector<aiLight*> lights;
+
+    aiVector3D up(0.0f, 0.0f, 1.0f);
+    aiVector3D orig(0.0f, 0.0f, 0.0f);
+
+    for (size_t iNode = 0; iNode < r.nodes.Size(); iNode++) {
+        auto &node = r.nodes[iNode];
+
+        if (!node.light) {
+            continue;
+        }
+
+        aiMatrix4x4 transform;
+        GetNodeTransform(transform, node);
+
+        if (!node.light) {
+            return;
+        }
+        Light &light = *node.light;
+
+        aiLight *ail = new aiLight();
+        ail->mName = GetNodeName(node);
+        lights.push_back(ail);
+
+        switch (light.type) {
+        case Light::Directional:
+            ail->mType = aiLightSource_DIRECTIONAL;
+            ail->mDirection = transform * up;
+            ail->mUp = up;
+            break;
+        case Light::Point:
+            ail->mType = aiLightSource_POINT;
+            ail->mPosition = transform * orig;
+            break;
+        case Light::Spot:
+            ail->mType = aiLightSource_SPOT;
+            ail->mPosition = transform * orig;
+            ail->mDirection = transform * up;
+            ail->mUp = up;
+            break;
+        }
+
+        CopyValue(light.color, ail->mColorAmbient);
+        CopyValue(light.color, ail->mColorDiffuse);
+        CopyValue(light.color, ail->mColorSpecular);
+
+        if (ail->mType == aiLightSource_DIRECTIONAL) {
+            ail->mAttenuationConstant = 1.0;
+            ail->mAttenuationLinear = 0.0;
+            ail->mAttenuationQuadratic = 0.0;
+        } else {
+            // in PBR attenuation is calculated using inverse square law which can be expressed
+            // using assimps equation: 1/(att0 + att1 * d + att2 * d*d) with the following parameters
+            // this is correct equation for the case when range (see
+            // https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual)
+            // is not present. When range is not present it is assumed that it is infinite and so numerator is 1.
+            // When range is present then numerator might be any value in range [0,1] and then assimps equation
+            // will not suffice. In this case range is added into metadata in ImportNode function
+            // and its up to implementation to read it when it wants to
+            ail->mAttenuationConstant = 0.0;
+            ail->mAttenuationLinear = 0.0;
+            ail->mAttenuationQuadratic = 1.0;
+        }
+
+        if (ail->mType == aiLightSource_SPOT) {
+            ail->mAngleInnerCone = light.innerConeAngle;
+            ail->mAngleOuterCone = light.outerConeAngle;
+        }
+
+        // See https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_lights_punctual#light-shared-properties
+        ail->mBrightness = light.intensity;
+
+        // range is optional - see https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
+        if (node.light->range.isPresent) {
+            ail->mRange = node.light->range.value;
+        }
+    }
+
+    const unsigned int numLights = lights.size();
+    ASSIMP_LOG_DEBUG("Importing ", numLights, " lights");
+    mScene->mNumLights = lights.size();
+    mScene->mLights = new aiLight *[lights.size()];
+    memcpy(mScene->mLights, lights.data(), numLights * sizeof(aiLight*));
 }
 
 static void BuildVertexWeightMapping(Mesh::Primitive &primitive, std::vector<std::vector<aiVertexWeight>> &map, std::vector<unsigned int>* vertexRemappingTablePtr) {
@@ -1085,10 +1116,6 @@ static void BuildVertexWeightMapping(Mesh::Primitive &primitive, std::vector<std
     delete[] weights;
     delete[] indices8;
     delete[] indices16;
-}
-
-static std::string GetNodeName(const Node &node) {
-    return node.name.empty() ? node.id : node.name;
 }
 
 void ParseExtensions(aiMetadata *metadata, const CustomExtension &extension) {
@@ -1232,21 +1259,6 @@ aiNode *glTF2Importer::ImportNode(glTF2::Asset &r, glTF2::Ref<glTF2::Node> &ptr)
 
         if (node.camera) {
             mScene->mCameras[node.camera.GetIndex()]->mName = ainode->mName;
-        }
-
-        if (node.light) {
-            mScene->mLights[node.light.GetIndex()]->mName = ainode->mName;
-
-            // range is optional - see https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
-            // it is added to meta data of parent node, because there is no other place to put it
-            if (node.light->range.isPresent) {
-                if (!ainode->mMetaData) {
-                    ainode->mMetaData = aiMetadata::Alloc(1);
-                    ainode->mMetaData->Set(0, "PBR_LightRange", node.light->range.value);
-                } else {
-                    ainode->mMetaData->Add("PBR_LightRange", node.light->range.value);
-                }
-            }
         }
 
         return ainode;

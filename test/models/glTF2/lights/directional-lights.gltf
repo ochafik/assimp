@@ -1,0 +1,175 @@
+{
+	"accessors": [
+		{
+			"bufferView": 0,
+			"byteOffset": 0,
+			"componentType": 5126,
+			"count": 15,
+			"max": [
+				1.0,
+				0.9510565400123596,
+				0.8660253882408142
+			],
+			"min": [
+				-0.80901700258255,
+				-0.9510565400123596,
+				-0.8660253882408142
+			],
+			"type": "VEC3"
+		},
+		{
+			"bufferView": 1,
+			"byteOffset": 0,
+			"componentType": 5125,
+			"count": 78,
+			"max": [
+				14.0
+			],
+			"min": [
+				0.0
+			],
+			"type": "SCALAR"
+		}
+	],
+	"asset": {
+		"extras": {
+			"created": "Tue Jul 23 02:42:54 2024"
+		},
+		"generator": "Gestaltor 2023.1.0 Titan Community (dev-59216b3*)",
+		"version": "2.0"
+	},
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 180,
+			"byteOffset": 0,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 312,
+			"byteOffset": 180,
+			"target": 34963
+		}
+	],
+	"buffers": [
+		{
+			"byteLength": 492,
+			"uri": "solid.bin"
+		}
+	],
+	"extensions": {
+		"KHR_lights_punctual": {
+			"lights": [
+				{
+					"color": [
+						0.1,
+						0.2,
+						0.3
+					],
+					"intensity": 10,
+					"name": "light0",
+					"type": "directional"
+				},
+				{
+					"color": [
+						0.4,
+						0.5,
+						0.6
+					],
+					"intensity": 20,
+					"name": "light1",
+					"type": "directional"
+				}
+			]
+		}
+	},
+	"extensionsUsed": [
+		"KHR_lights_punctual",
+		"KHR_materials_specular"
+	],
+	"materials": [
+		{
+			"extensions": {
+				"KHR_materials_specular": {
+					"specularColorFactor": [
+						0.9764705896377563,
+						0.843137264251709,
+						0.1725490242242813
+					],
+					"specularFactor": 1.0
+				}
+			},
+			"name": "material",
+			"pbrMetallicRoughness": {
+				"baseColorFactor": [
+					0.9764705896377563,
+					0.843137264251709,
+					0.1725490242242813,
+					1.0
+				]
+			}
+		}
+	],
+	"meshes": [
+		{
+			"primitives": [
+				{
+					"attributes": {
+						"POSITION": 0
+					},
+					"indices": 1,
+					"material": 0,
+					"mode": 4
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"children": [
+				1,
+				2,
+				3
+			]
+		},
+		{
+			"mesh": 0,
+			"name": "node_0"
+		},
+		{
+			"extensions": {
+				"KHR_lights_punctual": {
+					"light": 0
+				}
+			},
+			"rotation": [
+				-0.32505759596824646,
+				-0.32505759596824646,
+				0.0,
+				0.8880738615989685
+			]
+		},
+		{
+			"extensions": {
+				"KHR_lights_punctual": {
+					"light": 1
+				}
+			},
+			"rotation": [
+				0.6279630661010742,
+				0.6279630661010742,
+				-0.0,
+				0.45970088243484497
+			]
+		}
+	],
+	"scene": 0,
+	"scenes": [
+		{
+			"nodes": [
+				0
+			]
+		}
+	]
+}

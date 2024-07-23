@@ -232,6 +232,18 @@ struct aiLight {
      */
     float mAngleOuterCone;
 
+    /** Brightness of the light.
+     * 
+     * Expressed in candela (lm/sr) for point and spot lights, and in lux (lm/m2) for directional lights.
+     */
+    float mBrightness;
+
+    /** Distance cutoff at which the light's intensity may be considered to have reached zero.
+     * 
+     * Only defined for point and spot lights. Must be >0, can be +infinity.
+     */
+    float mRange;
+
     /** Size of area light source. */
     C_STRUCT aiVector2D mSize;
 
@@ -244,6 +256,8 @@ struct aiLight {
         ,   mAttenuationQuadratic (0.f)
         ,   mAngleInnerCone       ((float)AI_MATH_TWO_PI)
         ,   mAngleOuterCone       ((float)AI_MATH_TWO_PI)
+        ,   mBrightness           (1.0f)
+        ,   mRange                (std::numeric_limits<float>::infinity())
         ,   mSize                 (0.f, 0.f)
     {
     }

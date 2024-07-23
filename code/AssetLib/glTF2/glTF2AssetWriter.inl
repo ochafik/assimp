@@ -244,9 +244,18 @@ namespace glTF2 {
 
     }
 
-    inline void Write(Value& /*obj*/, Light& /*c*/, AssetWriter& /*w*/)
+    inline void Write(Value& obj, Light& l, AssetWriter& w)
     {
-
+        if (l.type == glTF2::Light::Directional) {
+            Value color;
+            color.SetArray();
+            color.PushBack(l.color[0], w.mAl);
+            color.PushBack(l.color[1], w.mAl);
+            color.PushBack(l.color[2], w.mAl);
+            obj.AddMember("color", color, w.mAl);
+            obj.AddMember("type", "directional", w.mAl);
+            obj.AddMember("intensity", l.intensity, w.mAl);
+        }
     }
 
     inline void Write(Value& obj, Image& img, AssetWriter& w)
@@ -729,6 +738,15 @@ namespace glTF2 {
             AddRefsVector(obj, "skeletons", n.skeletons, w.mAl);
         }
 
+        if (n.light) {
+            Value exts, ext;
+            exts.SetObject();
+            ext.SetObject();
+            ext.AddMember("light", n.light.GetIndex(), w.mAl);
+            exts.AddMember("KHR_lights_punctual", ext, w.mAl);
+            obj.AddMember("extensions", exts, w.mAl);
+        }
+
         WriteExtras(obj, n.extras, w);
     }
 
@@ -1024,6 +1042,10 @@ namespace glTF2 {
             if (this->mAsset.extensionsUsed.KHR_texture_basisu) {
                 exts.PushBack(StringRef("KHR_texture_basisu"), mAl);
             }
+
+            if (this->mAsset.extensionsUsed.KHR_lights_punctual) {
+                exts.PushBack(StringRef("KHR_lights_punctual"), mAl);
+            }
         }
 
         if (!exts.Empty())
@@ -1048,13 +1070,13 @@ namespace glTF2 {
 
         if (d.mExtId) {
             Value* exts = FindObject(mDoc, "extensions");
-            if (nullptr != exts) {
+            if (!exts) {
                 mDoc.AddMember("extensions", Value().SetObject().Move(), mDoc.GetAllocator());
                 exts = FindObject(mDoc, "extensions");
             }
 
             container = FindObjectInContext(*exts, d.mExtId, "extensions");
-            if (nullptr != container) {
+            if (!container) {
                 exts->AddMember(StringRef(d.mExtId), Value().SetObject().Move(), mDoc.GetAllocator());
                 container = FindObjectInContext(*exts, d.mExtId, "extensions");
                 context = d.mExtId;
@@ -1062,10 +1084,10 @@ namespace glTF2 {
         }
 
         Value *dict = FindArrayInContext(*container, d.mDictId, context);
-        if (nullptr == dict) {
+        if (!dict) {
             container->AddMember(StringRef(d.mDictId), Value().SetArray().Move(), mDoc.GetAllocator());
             dict = FindArrayInContext(*container, d.mDictId, context);
-            if (nullptr == dict) {
+            if (!dict) {
                 return;
             }
         }

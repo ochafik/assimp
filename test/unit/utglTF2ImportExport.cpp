@@ -201,6 +201,47 @@ TEST_F(utglTF2ImportExport, importglTF2_KHR_materials_clearcoat) {
 
 #ifndef ASSIMP_BUILD_NO_EXPORT
 
+void VerifyDirectionalLightsScene(const aiScene *scene) {
+    ASSERT_NE(nullptr, scene);
+
+    ASSERT_TRUE(scene->HasLights());
+    ASSERT_EQ(2u, scene->mNumLights);
+    ASSERT_NE(nullptr, scene->mLights[0]);
+    ASSERT_NE(nullptr, scene->mLights[1]);
+
+    auto VerifyDirection = [](aiVector3D expected_dir, float expected_length, aiVector3D vect) {
+        EXPECT_EQ(expected_length, vect.Length());
+        vect.Normalize();
+        expected_dir.Normalize();
+        EXPECT_EQ(0.0f, (expected_dir - vect).Length());
+    };
+
+    EXPECT_EQ(aiLightSource_DIRECTIONAL, scene->mLights[0]->mType);
+    EXPECT_EQ(aiColor3D(0.1f, 0.2f, 0.3f), scene->mLights[0]->mColorDiffuse);
+    VerifyDirection(aiVector3D(-1.0f, 1.0f, 1.0f), 10.0f, scene->mLights[0]->mDirection);
+
+    EXPECT_EQ(aiLightSource_DIRECTIONAL, scene->mLights[1]->mType);
+    EXPECT_EQ(aiColor3D(0.4f, 0.5f, 0.6f), scene->mLights[1]->mColorDiffuse);
+    VerifyDirection(aiVector3D(1.0f, -1.0f, -1.0f), 20.0f, scene->mLights[1]->mDirection);
+}   
+
+TEST_F(utglTF2ImportExport, importglTF2AndExport_KHR_lights_punctual) {
+    {
+        Assimp::Importer importer;
+        Assimp::Exporter exporter;
+        const aiScene* scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/lights/directional-lights.gltf", aiProcess_ValidateDataStructure);
+        ASSERT_NE(nullptr, scene);
+        // Export
+        EXPECT_EQ(aiReturn_SUCCESS, exporter.Export(scene, "glb2", ASSIMP_TEST_MODELS_DIR "/glTF2/lights/directional-lights_out.glb"));
+    }
+
+    // And re-import
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/lights/directional-lights_out.glb", aiProcess_ValidateDataStructure);
+
+    VerifyDirectionalLightsScene(scene);
+}
+
 TEST_F(utglTF2ImportExport, importglTF2AndExport_KHR_materials_clearcoat) {
     {
         Assimp::Importer importer;
