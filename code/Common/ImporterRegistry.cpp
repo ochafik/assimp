@@ -367,11 +367,11 @@ void GetImporterInstanceList(std::vector<BaseImporter *> &out) {
 #if (!defined ASSIMP_BUILD_NO_ASSBIN_IMPORTER)
     out.push_back(new AssbinImporter());
 #endif
-#if (!defined ASSIMP_BUILD_NO_GLTF_IMPORTER && !defined ASSIMP_BUILD_NO_GLTF1_IMPORTER)
-    out.push_back(new glTFImporter());
-#endif
 #if (!defined ASSIMP_BUILD_NO_GLTF_IMPORTER && !defined ASSIMP_BUILD_NO_GLTF2_IMPORTER)
     out.push_back(new glTF2Importer());
+#endif
+#if (!defined ASSIMP_BUILD_NO_GLTF_IMPORTER && !defined ASSIMP_BUILD_NO_GLTF1_IMPORTER)
+    out.push_back(new glTFImporter());
 #endif
 #if (!defined ASSIMP_BUILD_NO_C4D_IMPORTER)
     out.push_back(new C4DImporter());
