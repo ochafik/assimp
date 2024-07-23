@@ -50,6 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assimp/Exporter.hpp>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
+#include <assimp/BlobIOSystem.h>
 
 #include "3MFXmlTags.h"
 #include "D3MFOpcPackage.h"
@@ -76,6 +77,20 @@ void ExportScene3MF(const char *pFile, IOSystem *pIOSystem, const aiScene *pScen
         bool ok = myExporter.exportArchive(pFile);
         if (!ok) {
             throw DeadlyExportError("Could not export 3MP archive: " + std::string(pFile));
+        }
+        if (auto blobIO = dynamic_cast<BlobIOSystem *>(pIOSystem)) {
+            aiExportDataBlob * blob = new aiExportDataBlob();
+            auto f = fopen(pFile, "rb");
+            if (!f) {
+                throw DeadlyExportError("Could not open file for reading: " + std::string(pFile));
+            }
+            fseek(f, 0, SEEK_END);
+            blob->size = ftell(f);
+            fseek(f, 0, SEEK_SET);
+            blob->data = new char[blob->size];
+            fread(blob->data, 1, blob->size, f);
+            fclose(f);
+            blobIO->blobs.emplace_back(pFile, blob);
         }
     }
 }
