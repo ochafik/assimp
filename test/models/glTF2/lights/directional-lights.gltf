@@ -62,24 +62,37 @@
 		"KHR_lights_punctual": {
 			"lights": [
 				{
+					"name": "light0",
+					"type": "directional",
 					"color": [
 						0.1,
 						0.2,
 						0.3
 					],
-					"intensity": 10,
-					"name": "light0",
-					"type": "directional"
+					"intensity": 10
 				},
 				{
+					"name": "light1",
+					"type": "point",
 					"color": [
 						0.4,
 						0.5,
 						0.6
 					],
-					"intensity": 20,
-					"name": "light1",
-					"type": "directional"
+					"intensity": 20
+				},
+				{
+					"name": "light2",
+					"type": "spot",
+					"color": [
+						0.7,
+						0.8,
+						0.9
+					],
+					"spot": {
+							"innerConeAngle": 0.7,
+							"outerConeAngle": 1.5
+					}
 				}
 			]
 		}
@@ -130,7 +143,8 @@
 			"children": [
 				1,
 				2,
-				3
+				3,
+				4
 			]
 		},
 		{
@@ -156,11 +170,22 @@
 					"light": 1
 				}
 			},
-			"rotation": [
-				0.6279630661010742,
-				0.6279630661010742,
-				-0.0,
-				0.45970088243484497
+			"translation": [
+				1.0,
+				2.0,
+				3.0
+			]
+		},
+		{
+			"extensions": {
+				"KHR_lights_punctual": {
+					"light": 2
+				}
+			},
+			"translation": [
+				10.0,
+				20.0,
+				30.0
 			]
 		}
 	],

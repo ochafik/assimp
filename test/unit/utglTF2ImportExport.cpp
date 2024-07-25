@@ -205,9 +205,10 @@ void VerifyDirectionalLightsScene(const aiScene *scene) {
     ASSERT_NE(nullptr, scene);
 
     ASSERT_TRUE(scene->HasLights());
-    ASSERT_EQ(2u, scene->mNumLights);
+    ASSERT_EQ(3u, scene->mNumLights);
     ASSERT_NE(nullptr, scene->mLights[0]);
     ASSERT_NE(nullptr, scene->mLights[1]);
+    ASSERT_NE(nullptr, scene->mLights[2]);
 
     auto VerifyDirection = [](aiVector3D expected_dir, float expected_length, aiVector3D vect) {
         EXPECT_EQ(expected_length, vect.Length());

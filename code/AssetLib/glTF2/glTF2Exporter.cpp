@@ -806,34 +806,31 @@ bool glTF2Exporter::GetMatEmissiveStrength(const aiMaterial &mat, glTF2::Materia
 }
 
 template<typename T>
-aiQuaterniont<T> calculateQuaternionFromDirection(T dx, T dy, T dz) {
-    // The default forward direction in glTF is Z+
+aiQuaterniont<T> rotationFromLightDirection(T dx, T dy, T dz) {
+    // The default light direction is -Z
+    // https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#adding-light-instances-to-nodes
+    // Note that this is different from the default default forward direction in glTF which is Z+
     // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
-    const aiVector3t<T> forward(0, 0, 1);
+    const aiVector3t<T> defaultDirection(0, 0, -1);
     aiVector3t<T> direction(dx, dy, dz);
     direction.Normalize();
 
-    auto rotationAxis = (forward ^ direction).Normalize();
-    T angle = std::acos(forward * direction);
+    auto rotationAxis = (defaultDirection ^ direction).Normalize();
+    T angle = std::acos(defaultDirection * direction);
     return aiQuaterniont<T>(rotationAxis, angle);
 }
 
 void glTF2Exporter::ExportLights() {
     for (unsigned int i = 0; i < mScene->mNumLights; ++i) {
         aiLight *light = mScene->mLights[i];
-        if (light == nullptr) {
+        if (!light) {
             continue;
         }
-        if (light->mType != aiLightSourceType::aiLightSource_DIRECTIONAL) {
-            continue;
-        }
-
         auto lightId = mAsset->FindUniqueID(
             light->mName.length > 0 ? light->mName.C_Str() : "light",
             "id");
         Ref<Light> l = mAsset->lights.Create(lightId);
         l->name = lightId;
-        l->type = glTF2::Light::Directional;
         l->color[0] = light->mColorDiffuse.r;
         l->color[1] = light->mColorDiffuse.g;
         l->color[2] = light->mColorDiffuse.b;
@@ -845,16 +842,52 @@ void glTF2Exporter::ExportLights() {
         auto lightNodeId = mAsset->FindUniqueID(lightId, "node");
         Ref<Node> lightNode = mAsset->nodes.Create(lightNodeId);
         lightNode->light = l;
-        auto rotationQuat = calculateQuaternionFromDirection(
-            light->mDirection.x,
-            light->mDirection.y,
-            light->mDirection.z
-        );
-        lightNode->rotation.value[0] = rotationQuat.x;
-        lightNode->rotation.value[1] = rotationQuat.y;
-        lightNode->rotation.value[2] = rotationQuat.z;
-        lightNode->rotation.value[3] = rotationQuat.w;
-        lightNode->rotation.isPresent = true;
+
+        bool needsRotation = false;
+        bool needsTranslation = false;
+        bool supported = true;
+        switch (light->mType) {
+        case aiLightSourceType::aiLightSource_DIRECTIONAL:
+            l->type = glTF2::Light::Directional;
+            needsRotation = true;
+            break;
+        case aiLightSourceType::aiLightSource_POINT:
+            l->type = glTF2::Light::Point;
+            needsTranslation = true;
+            break;
+        case aiLightSourceType::aiLightSource_SPOT:
+            l->type = glTF2::Light::Spot;
+            needsTranslation = true;
+            needsRotation = true;
+            break;
+        default:
+            supported = false;
+        }
+
+        if (!supported) {
+            continue;
+        }
+
+        if (needsRotation) {
+            auto rotationQuat = rotationFromLightDirection(
+                light->mDirection.x,
+                light->mDirection.y,
+                light->mDirection.z
+            );
+            lightNode->rotation.value[0] = rotationQuat.x;
+            lightNode->rotation.value[1] = rotationQuat.y;
+            lightNode->rotation.value[2] = rotationQuat.z;
+            lightNode->rotation.value[3] = rotationQuat.w;
+            lightNode->rotation.isPresent = true;
+        }
+
+        if (needsTranslation) {
+            lightNode->translation.value[0] = light->mPosition.x;
+            lightNode->translation.value[1] = light->mPosition.y;
+            lightNode->translation.value[2] = light->mPosition.z;
+            lightNode->translation.isPresent = true;
+        }
+
         mAsset->nodes.Get(unsigned(0))->children.push_back(lightNode);
     }
     mAsset->extensionsUsed.KHR_lights_punctual = true;
